@@ -47,6 +47,7 @@ void str_ser(int sockfd)
 	int end, n = 0;
 	long lseek=0;
 	end = 0;
+	int x = 0; // 0 after 1DU, 2 after 2 DUs, 5 after 3DUs
 	
 	printf("receiving data!\n");
 
@@ -64,14 +65,24 @@ void str_ser(int sockfd)
 		}
 		memcpy((buf+lseek), recvs, n);
 		lseek += n;
-	}
-	ack.num = 1;
-	ack.len = 0;
-	if ((n = send(sockfd, &ack, 2, 0))==-1)
-	{
-			printf("send error!");								//send the ack
+		
+		if (x == 0 || x == 2 || x == 5) // send ack
+		{
+		    ack.num = 1;
+		    ack.len = 0;
+		    if ((n = send(sockfd, &ack, 2, 0))==-1)
+		    {
+			printf("send error!");
 			exit(1);
+		    }
+		}
+		x++;
+		if (x == 5) 
+		{
+			x = 0;	
+		}
 	}
+	
 	if ((fp = fopen ("myTCPreceive.txt","wt")) == NULL)
 	{
 		printf("File doesn't exit\n");
