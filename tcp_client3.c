@@ -84,6 +84,7 @@ float str_cli(FILE *fp, int sockfd, long *len)
 	float time_inv = 0.0;
 	struct timeval sendt, recvt;
 	ci = 0;
+	int x = 0; // 0 means send 1DU, 1 means send 2DUs, 2 means send 3 DUs
 
 	fseek (fp , 0 , SEEK_END);
 	lsize = ftell (fp);
@@ -103,25 +104,62 @@ float str_cli(FILE *fp, int sockfd, long *len)
 	gettimeofday(&sendt, NULL);							//get the current time
 	while(ci<= lsize)
 	{
-		if ((lsize+1-ci) <= DATALEN)
-			slen = lsize+1-ci;
-		else 
-			slen = DATALEN;
-		memcpy(sends, (buf+ci), slen);
-		n = send(sockfd, &sends, slen, 0);
-		if(n == -1) {
-			printf("send error!");								//send the data
+		if (x == 0) {
+			if ((lsize+1-ci) <= DATALEN)
+				slen = lsize+1-ci;
+			else 
+				slen = DATALEN;
+			memcpy(sends, (buf+ci), slen);
+			n = send(sockfd, &sends, slen, 0);
+			if(n == -1) {
+				printf("send error!");								//send the data
+				exit(1);
+			}
+			ci += slen;
+		} else if (x == 1) {
+			for (int i = 0; i < 2; i++)
+            		{
+				if ((lsize+1-ci) <= DATALEN)
+					slen = lsize+1-ci;
+				else 
+					slen = DATALEN;
+				memcpy(sends, (buf+ci), slen);
+				n = send(sockfd, &sends, slen, 0);
+				if(n == -1) {
+					printf("send error!");								//send the data
+					exit(1);
+				}
+				ci += slen;
+			}
+		} else if (x == 2) {
+			for (int i = 0; i < 3; i++)
+            		{
+				if ((lsize+1-ci) <= DATALEN)
+					slen = lsize+1-ci;
+				else 
+					slen = DATALEN;
+				memcpy(sends, (buf+ci), slen);
+				n = send(sockfd, &sends, slen, 0);
+				if(n == -1) {
+					printf("send error!");								//send the data
+					exit(1);
+				}
+				ci += slen;
+			}
+		}
+		x++;
+		if (x == 3) {
+			x = 0;	
+		}
+		if ((n= recv(sockfd, &ack, 2, 0))==-1)                                   //receive the ack
+		{
+			printf("error when receiving\n");
 			exit(1);
 		}
-		ci += slen;
+		if (ack.num != 1|| ack.len != 0)
+			printf("error in transmission\n");
 	}
-	if ((n= recv(sockfd, &ack, 2, 0))==-1)                                   //receive the ack
-	{
-		printf("error when receiving\n");
-		exit(1);
-	}
-	if (ack.num != 1|| ack.len != 0)
-		printf("error in transmission\n");
+	
 	gettimeofday(&recvt, NULL);
 	*len= ci;                                                         //get current time
 	tv_sub(&recvt, &sendt);                                                                 // get the whole trans time
