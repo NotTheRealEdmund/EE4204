@@ -1,18 +1,19 @@
 /**********************************
-tcp_ser.c: the source file of the server in tcp transmission 
+udp_ser.c: the source file of the server in udp transmission 
 ***********************************/
-
 
 #include "headsock.h"
 
-void str_ser(int sockfd);                                                        // transmitting and receiving function
+// Function to send ACKs and receive data packets (DUs)
+void str_ser(int sockfd);
 
 int main(void)
 {
 	int sockfd;
 	struct sockaddr_in my_addr;
-
-	sockfd = socket(AF_INET, SOCK_DGRAM, 0);          //create socket
+	
+	// Create udp socket
+	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sockfd <0)
 	{
 		printf("error in socket!");
@@ -47,18 +48,23 @@ void str_ser(int sockfd)
 	int end, n = 0;
 	long lseek=0;
 	end = 0;
-	int x = 0; // 0 after 1DU, 2 after 2 DUs, 5 after 3DUs
+	
+	// Keep track of when to send ACK, 0 means send after 1DU, 2 means send after 2 DUs, 5 means send after 3DUs
+	int x = 0;
 	
 	printf("receiving data!\n");
 
 	while(!end)
 	{
-		if ((n= recv(sockfd, &recvs, DATALEN, 0))==-1)                                   //receive the packet
+		// Receive the packet
+		if ((n= recv(sockfd, &recvs, DATALEN, 0))==-1)
 		{
 			printf("error when receiving\n");
 			exit(1);
 		}
-		if (recvs[n-1] == '\0')									//if it is the end of the file
+		
+		// If it is the end of the file
+		if (recvs[n-1] == '\0')
 		{
 			end = 1;
 			n --;
@@ -66,7 +72,8 @@ void str_ser(int sockfd)
 		memcpy((buf+lseek), recvs, n);
 		lseek += n;
 		
-		if (x == 0 || x == 2 || x == 5) // send ack
+		// Send ACK
+		if (x == 0 || x == 2 || x == 5)
 		{
 		    ack.num = 1;
 		    ack.len = 0;
@@ -76,6 +83,8 @@ void str_ser(int sockfd)
 			exit(1);
 		    }
 		}
+		
+		// Increment x every time a data packet is received, reset after 3DUs
 		x++;
 		if (x == 5) 
 		{
@@ -83,12 +92,13 @@ void str_ser(int sockfd)
 		}
 	}
 	
-	if ((fp = fopen ("myTCPreceive.txt","wt")) == NULL)
+	if ((fp = fopen ("myUDPreceive.txt","wt")) == NULL)
 	{
-		printf("File doesn't exit\n");
+		printf("File doesn't exist\n");
 		exit(0);
 	}
-	fwrite (buf , 1 , lseek , fp);					//write data into file
+	// Write data into file
+	fwrite (buf , 1 , lseek , fp);
 	fclose(fp);
-	printf("a file has been successfully received!\nthe total data received is %d bytes\n", (int)lseek);
+	printf("A file has been successfully received!\nthe total data received is %d bytes\n", (int)lseek);
 }
