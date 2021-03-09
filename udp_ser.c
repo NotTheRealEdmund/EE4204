@@ -5,7 +5,7 @@ udp_ser.c: the source file of the server in udp transmission
 #include "headsock.h"
 
 // Function to send ACKs and receive data packets (DUs)
-void str_ser(int sockfd);
+void str_ser(int sockfd, struct sockaddr *addr, int addrlen);
 
 int main(void)
 {
@@ -33,13 +33,13 @@ int main(void)
 	while (1)
 	{
 		printf("waiting for data\n");
-		str_ser(sockfd);
+		str_ser(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr_in));
 	}
 	close(sockfd);
 	exit(0);
 }
 
-void str_ser(int sockfd)
+void str_ser(int sockfd, struct sockaddr *addr, int addrlen)
 {
 	char buf[BUFSIZE];
 	FILE *fp;
@@ -57,7 +57,7 @@ void str_ser(int sockfd)
 	while(!end)
 	{
 		// Receive the packet
-		if ((n= recv(sockfd, &recvs, DATALEN, 0))==-1)
+		if ((n= recvfrom(sockfd, &recvs, DATALEN, 0, addr, (socklen_t *)&addrlen))==-1)
 		{
 			printf("error when receiving\n");
 			exit(1);
@@ -77,7 +77,7 @@ void str_ser(int sockfd)
 		{
 		    ack.num = 1;
 		    ack.len = 0;
-		    if ((n = send(sockfd, &ack, 2, 0))==-1)
+		    if ((n = sendto(sockfd, &ack, 2, 0, addr, addrlen))==-1)
 		    {
 			printf("send error!");
 			exit(1);
