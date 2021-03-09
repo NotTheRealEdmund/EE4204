@@ -9,7 +9,7 @@ void tv_sub(struct  timeval *out, struct timeval *in);	    //calcu the time inte
 
 int main(int argc, char **argv)
 {
-	int sockfd, ret;
+	int sockfd;
 	float ti, rt;
 	long len;
 	struct sockaddr_in ser_addr;
@@ -42,18 +42,17 @@ int main(int argc, char **argv)
 	}
         
 	addrs = (struct in_addr **)sh->h_addr_list;
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);                           //create the socket
+	sockfd = socket(AF_INET, SOCK_DGRAM, 0);                           //create the socket
 	if (sockfd <0)
 	{
 		printf("error in socket");
 		exit(1);
 	}
 	ser_addr.sin_family = AF_INET;                                                      
-	ser_addr.sin_port = htons(MYTCP_PORT);
+	ser_addr.sin_port = htons(MYUDP_PORT);
 	memcpy(&(ser_addr.sin_addr.s_addr), *addrs, sizeof(struct in_addr));
 	bzero(&(ser_addr.sin_zero), 8);
-	ret = connect(sockfd, (struct sockaddr *)&ser_addr, sizeof(struct sockaddr));         //connect the socket with the host
-	if (ret != 0) {
+	if (connect(sockfd, (struct sockaddr *)&ser_addr, sizeof(struct sockaddr)) != 0) {	//connect the socket with the host
 		printf ("connection failed\n"); 
 		close(sockfd); 
 		exit(1);
