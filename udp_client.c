@@ -176,7 +176,7 @@ float str_cli(FILE *fp, int sockfd, struct sockaddr *addr, int addrlen, long *le
 		}
 		
 		// Receive the ACK
-		if ((n= recv(sockfd, &ack, 2, 0))==-1)
+		if ((n= recvfrom(sockfd, &ack, 2, 0, addr, (socklen_t *)&addrlen))==-1)
 		{
 			printf("error when receiving\n");
 			exit(1);
