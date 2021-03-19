@@ -1,5 +1,5 @@
 /*******************************
-udp_client.c: the source file of the client in udp transmission 
+stop_client.c: the source file of the client in udp transmission with stop-and-wait protocol where the batch size is always fixed to be 1
 ********************************/
 
 #include "headsock.h"
@@ -93,9 +93,6 @@ float str_cli(FILE *fp, int sockfd, struct sockaddr *addr, int addrlen, long *le
 	float time_inv = 0.0;
 	struct timeval sendt, recvt;
 	ci = 0;
-	
-	// Keep track of how many DUs to send, 0 means send 1DU, 1 means send 2DUs, 2 means send 3 DUs
-	int x = 0;
 
 	fseek (fp , 0 , SEEK_END);
 	lsize = ftell (fp);
@@ -117,73 +114,21 @@ float str_cli(FILE *fp, int sockfd, struct sockaddr *addr, int addrlen, long *le
 	gettimeofday(&sendt, NULL);
 	while(ci<= lsize)
 	{
-		// Send 1DU
-		if (x == 0) {
-			if ((lsize+1-ci) <= DATALEN)
-				slen = lsize+1-ci;
-			else 
-				slen = DATALEN;
-			memcpy(sends, (buf+ci), slen);
-			// Send the data
-			n = sendto(sockfd, &sends, slen, 0, addr, addrlen);
-			if(n == -1) {
-				printf("send error!");
-				exit(1);
-			}
-			ci += slen;
-		} 
-		// Send 2DUs
-		else if (x == 1) {
-			for (int i = 0; i < 2; i++)
-			{
-				if ((lsize+1-ci) <= DATALEN)
-					slen = lsize+1-ci;
-				else 
-					slen = DATALEN;
-				memcpy(sends, (buf+ci), slen);
-				// Send the data
-				n = sendto(sockfd, &sends, slen, 0, addr, addrlen);
-				if(n == -1) {
-					printf("send error!");
-					exit(1);
-				}
-				ci += slen;
-			}
-		} 
-		// Send 3DUs
-		else if (x == 2) {
-			for (int i = 0; i < 3; i++)
-            		{
-				if ((lsize+1-ci) <= DATALEN)
-					slen = lsize+1-ci;
-				else 
-					slen = DATALEN;
-				memcpy(sends, (buf+ci), slen);
-				// Send the data
-				n = sendto(sockfd, &sends, slen, 0, addr, addrlen);
-				if(n == -1) {
-					printf("send error!");
-					exit(1);
-				}
-				ci += slen;
-			}
-		}
-		
-		// Increment x every time an ACK is received, reset after 3 ACKs
-		x++;
-		if (x == 3) {
-			x = 0;	
-		}
-		
-		// Receive the ACK
-		if ((n= recvfrom(sockfd, &ack, 2, 0, addr, (socklen_t *)&addrlen))==-1)
-		{
-			printf("error when receiving\n");
+		if ((lsize+1-ci) <= DATALEN)
+			slen = lsize+1-ci;
+		else 
+			slen = DATALEN;
+		memcpy(sends, (buf+ci), slen);
+		// Send the data
+		n = sendto(sockfd, &sends, slen, 0, addr, addrlen);
+		if(n == -1) {
+			printf("send error!");
 			exit(1);
 		}
-		if (ack.num != 1|| ack.len != 0)
-			printf("error in transmission\n");
+		ci += slen;
 	}
+	if (ack.num != 1|| ack.len != 0)
+		printf("error in transmission\n");
 	
 	gettimeofday(&recvt, NULL);
 	*len= ci;                                                         //get current time
