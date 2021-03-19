@@ -86,7 +86,7 @@ void str_ser(int sockfd, struct sockaddr *addr, int addrlen)
 		
 		// Increment x every time a data packet is received, reset after 3DUs
 		x++;
-		if (x == 5) 
+		if (x == 6) 
 		{
 			x = 0;	
 		}
