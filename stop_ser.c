@@ -1,5 +1,5 @@
 /**********************************
-udp_ser.c: the source file of the server in udp transmission 
+stop_ser.c: the source file of the server in udp transmission with stop-and-wait protocol where the ACK returned is always fixed to be 1
 ***********************************/
 
 #include "headsock.h"
@@ -72,26 +72,15 @@ void str_ser(int sockfd, struct sockaddr *addr, int addrlen)
 		memcpy((buf+lseek), recvs, n);
 		lseek += n;
 		
-		// Send ACK
-		if (x == 0 || x == 2 || x == 5)
-		{
-		    ack.num = 1;
-		    ack.len = 0;
-		    if ((n = sendto(sockfd, &ack, 2, 0, addr, addrlen))==-1)
-		    {
-			printf("send error!");
-			exit(1);
-		    }
-		}
-		
-		// Increment x every time a data packet is received, reset after 3DUs
-		x++;
-		if (x == 6) 
-		{
-			x = 0;	
-		}
+	        ack.num = 1;
+	        ack.len = 0;
+	        if ((n = sendto(sockfd, &ack, 2, 0, addr, addrlen))==-1)
+	        {
+		    printf("send error!");
+		    exit(1);
+	        }
 	}
-	
+
 	if ((fp = fopen ("myUDPreceive.txt","wt")) == NULL)
 	{
 		printf("File doesn't exist\n");
